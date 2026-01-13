@@ -1,0 +1,14 @@
+defaults:
+  - _self_
+  - model: simple_cnn
+  - data: mit_bih
+
+mlflow:
+  tracking_uri: "http://127.0.0.1:8080"
+  experiment_name: "ecg_classification"
+
+train:
+  epochs: 10
+  lr: 0.001
+  batch_size: 32
+  accelerator: "auto" # "cpu" или "gpu"

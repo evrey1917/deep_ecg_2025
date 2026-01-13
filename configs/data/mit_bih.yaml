@@ -1,0 +1,3 @@
+train_path: "data/mit_bih/mitbih_train.csv"
+test_path: "data/mit_bih/mitbih_test.csv"
+val_split: 0.2

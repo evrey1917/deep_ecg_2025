@@ -1,7 +1,7 @@
 [project]
 name = "deep-ecg-2025"
 version = "0.1.0"
-description = "Add your description here"
+description = "Bachelor work, NSU, 2025"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
