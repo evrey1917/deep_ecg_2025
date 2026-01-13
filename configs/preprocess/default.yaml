@@ -1,0 +1,21 @@
+raw_data_dir: "data/mit_bih"
+processed_data_path: "data/processed/mitbih_processed.pt"
+window_size: 187 # стандарт для MIT-BIH
+# Маппинг символов аннотаций в числовые классы (0-4)
+# N: Normal, S: Supraventricular, V: Ventricular, F: Fusion, Q: Unknown
+label_map:
+  "N": 0
+  "L": 0
+  "R": 0
+  "e": 0
+  "j": 0
+  "A": 1
+  "a": 1
+  "J": 1
+  "S": 1
+  "V": 2
+  "E": 2
+  "F": 3
+  "/": 4
+  "f": 4
+  "Q": 4
