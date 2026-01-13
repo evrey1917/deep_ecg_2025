@@ -1,4 +1,5 @@
-import os
+import subprocess
+from pathlib import Path
 
 import hydra
 import numpy as np
@@ -7,49 +8,76 @@ import wfdb
 from omegaconf import DictConfig
 
 
-def get_records(data_dir):
-    # Получаем список всех записей (имена файлов без расширений)
-    files = [f.split(".")[0] for f in os.listdir(data_dir) if f.endswith(".hea")]
-    return sorted(list(set(files)))
+def sync_data():
+    """Синхронизация данных через DVC CLI."""
+    print("Checking data status via DVC...")
+    try:
+        # shell=True может понадобиться на Windows, если dvc не в PATH
+        subprocess.run(["dvc", "pull"], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"DVC pull failed (maybe you are offline?): {e}")
+    except FileNotFoundError:
+        print("DVC command not found. Make sure dvc is installed.")
+
+
+def get_records(data_dir: Path):
+    """Список записей MIT-BIH (имена без расширений)."""
+    # .glob ищет файлы, .stem забирает имя без расширения
+    hea_files = data_dir.glob("*.hea")
+    return sorted({f.stem for f in hea_files})
 
 
 @hydra.main(version_base="1.3", config_path="../configs", config_name="config")
 def preprocess(cfg: DictConfig):
-    data_dir = cfg.preprocess.raw_data_dir
-    records = get_records(data_dir)
+    # 1. Синхронизируем данные перед началом работы
+    sync_data()
 
+    # 2. Настраиваем пути через Path
+    data_dir = Path(cfg.preprocess.raw_data_dir)
+    processed_path = Path(cfg.preprocess.processed_data_path)
+
+    if not data_dir.exists():
+        print(f"Error: Raw data directory {data_dir} does not exist!")
+        return
+
+    records = get_records(data_dir)
     all_beats = []
     all_labels = []
 
-    print(f"Processing {len(records)} records...")
+    print(f"Processing {len(records)} records from {data_dir}...")
 
     for record_name in records:
-        record_path = os.path.join(data_dir, record_name)
-        # Читаем сигнал и аннотации
-        record = wfdb.rdrecord(record_path)
-        ann = wfdb.rdann(record_path, "atr")
+        # Path позволяет склеивать пути через оператор /
+        record_full_path = data_dir / record_name
 
-        signal = record.p_signal[:, 0]  # первый канал
+        # wfdb принимает строку, поэтому конвертируем Path в str
+        record = wfdb.rdrecord(str(record_full_path))
+        ann = wfdb.rdann(str(record_full_path), "atr")
+
+        signal = record.p_signal[:, 0]
 
         for idx, symbol in zip(ann.sample, ann.symbol):
             if symbol in cfg.preprocess.label_map:
-                # Центрируем окно вокруг R-пика
                 half_win = cfg.preprocess.window_size // 2
-                if idx > half_win and idx < len(signal) - half_win:
+                if half_win < idx < len(signal) - half_win:
                     beat = signal[idx - half_win : idx + half_win + 1]
-                    # Нормализация (амплитуда 0-1)
-                    beat = (beat - np.min(beat)) / (np.max(beat) - np.min(beat) + 1e-8)
+
+                    # Нормализация
+                    denom = np.max(beat) - np.min(beat) + 1e-8
+                    beat = (beat - np.min(beat)) / denom
 
                     all_beats.append(beat)
                     all_labels.append(cfg.preprocess.label_map[symbol])
 
-    # Сохраняем как тензоры PyTorch (удобно для Lightning)
+    # 3. Сохранение результатов
     X = torch.FloatTensor(np.array(all_beats)).unsqueeze(1)
     y = torch.LongTensor(np.array(all_labels))
 
-    os.makedirs(os.path.dirname(cfg.preprocess.processed_data_path), exist_ok=True)
-    torch.save({"x": X, "y": y}, cfg.preprocess.processed_data_path)
-    print(f"Saved {len(X)} samples to {cfg.preprocess.processed_data_path}")
+    # Создаем родительскую папку, если её нет
+    processed_path.parent.mkdir(parents=True, exist_ok=True)
+
+    torch.save({"x": X, "y": y}, processed_path)
+    print(f"Saved {len(X)} samples to {processed_path}")
 
 
 if __name__ == "__main__":
