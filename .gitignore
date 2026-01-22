@@ -9,7 +9,10 @@ data/mit_bih/*
 !data/mit_bih/.gitkeep
 data/processed/
 models/*.ckpt
-models/*.onn
+models/*.onnx*
+1
+2
+3
 
 # MLflow
 mlruns/

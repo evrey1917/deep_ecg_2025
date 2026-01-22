@@ -1,0 +1,3 @@
+input_path: "data/mit_bih/100"
+
+model_path: "models/ecg_model.onnx"

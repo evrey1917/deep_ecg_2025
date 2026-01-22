@@ -1,4 +1,3 @@
-import subprocess
 from pathlib import Path
 
 import hydra
@@ -6,18 +5,6 @@ import numpy as np
 import torch
 import wfdb
 from omegaconf import DictConfig
-
-
-def sync_data():
-    """Синхронизация данных через DVC CLI."""
-    print("Checking data status via DVC...")
-    try:
-        # shell=True может понадобиться на Windows, если dvc не в PATH
-        subprocess.run(["dvc", "pull"], check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"DVC pull failed (maybe you are offline?): {e}")
-    except FileNotFoundError:
-        print("DVC command not found. Make sure dvc is installed.")
 
 
 def get_records(data_dir: Path):
@@ -29,10 +16,7 @@ def get_records(data_dir: Path):
 
 @hydra.main(version_base="1.3", config_path="../configs", config_name="config")
 def preprocess(cfg: DictConfig):
-    # 1. Синхронизируем данные перед началом работы
-    sync_data()
 
-    # 2. Настраиваем пути через Path
     data_dir = Path(cfg.preprocess.raw_data_dir)
     processed_path = Path(cfg.preprocess.processed_data_path)
 

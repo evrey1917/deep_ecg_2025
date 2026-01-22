@@ -48,10 +48,12 @@ def train(cfg: DictConfig):
     trainer.fit(model, dm)
 
     # 6. Сохранение артефактов
-    models_dir = Path("models")
+    models_dir = Path(cfg.paths.models_dir)
     models_dir.mkdir(exist_ok=True)
-    trainer.save_checkpoint(models_dir / "last.ckpt")
-    print(f"Model saved to {models_dir / 'last.ckpt'}")
+
+    checkpoint_path = Path(cfg.checkpoint_path)
+    trainer.save_checkpoint(checkpoint_path)
+    print(f"Model saved to {checkpoint_path}")
 
 
 if __name__ == "__main__":

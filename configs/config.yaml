@@ -3,6 +3,8 @@ defaults:
   - model: simple_cnn
   - data: mit_bih
   - preprocess: default
+  - infer: infer
+  - train: train
 
 mlflow:
   tracking_uri: "http://127.0.0.1:8080"

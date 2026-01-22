@@ -1,0 +1,2 @@
+checkpoint_path: models/last.ckpt
+model_path: models/ecg_model.onnx

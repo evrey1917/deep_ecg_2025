@@ -15,6 +15,7 @@ dependencies = [
     "boto3>=1.42.19",
     "s3fs>=2026.1.0",
     "wfdb>=4.3.0",
+    "onnxscript>=0.5.7",
 ]
 
 [dependency-groups]
